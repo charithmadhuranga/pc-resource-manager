@@ -1,0 +1,184 @@
+/* Dark Mode Theme for PC Resource Manager */
+
+window {
+    background: #1e1e1e;
+}
+
+.card {
+    background: #2d2d2d;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 8px;
+}
+
+.header {
+    font-weight: bold;
+    font-size: 18px;
+    color: #ffffff;
+    margin-bottom: 12px;
+}
+
+.subheader {
+    font-weight: 600;
+    font-size: 14px;
+    color: #b0b0b0;
+    margin-bottom: 8px;
+    margin-top: 12px;
+}
+
+.progress-bar {
+    border-radius: 4px;
+    background: #3d3d3d;
+}
+
+progressbar > trough {
+    background: #3d3d3d;
+    border-radius: 4px;
+}
+
+progressbar > progress {
+    background: linear-gradient(90deg, #4a90d9, #6ab0ff);
+    border-radius: 4px;
+}
+
+.cpu-high progress {
+    background: linear-gradient(90deg, #d94a4a, #ff6b6b);
+}
+
+.cpu-medium progress {
+    background: linear-gradient(90deg, #d9a84a, #ffd06b);
+}
+
+.cpu-low progress {
+    background: linear-gradient(90deg, #4ad94a, #6bff6b);
+}
+
+.label {
+    color: #e0e0e0;
+    font-size: 13px;
+}
+
+.value {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.small-label {
+    color: #888888;
+    font-size: 11px;
+}
+
+entry {
+    background: #3d3d3d;
+    color: #ffffff;
+    padding: 8px;
+    border: 1px solid #4d4d4d;
+    border-radius: 6px;
+}
+
+button {
+    background: #4a90d9;
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 8px 16px;
+    border: none;
+}
+
+button:hover {
+    background: #5a9fe9;
+}
+
+button.danger {
+    background: #d94a4a;
+}
+
+button.danger:hover {
+    background: #e95a5a;
+}
+
+button.secondary {
+    background: #4d4d4d;
+}
+
+button.secondary:hover {
+    background: #5d5d5d;
+}
+
+treeview {
+    background: #2d2d2d;
+    color: #e0e0e0;
+    border: none;
+}
+
+treeview header {
+    background: #3d3d3d;
+    color: #b0b0b0;
+    font-weight: 600;
+}
+
+treeview row:nth-child(odd) {
+    background: #333333;
+}
+
+treeview row:nth-child(even) {
+    background: #2d2d2d;
+}
+
+treeview row:hover {
+    background: #4a4a4a;
+}
+
+scrolledwindow {
+    border: none;
+}
+
+scrollbar > slider {
+    background: #4d4d4d;
+    border-radius: 4px;
+}
+
+notebook {
+    background: transparent;
+}
+
+notebook tab {
+    background: #2d2d2d;
+    color: #b0b0b0;
+    padding: 10px 20px;
+    border-radius: 8px 8px 0 0;
+}
+
+notebook tab:checked {
+    background: #3d3d3d;
+    color: #ffffff;
+}
+
+notebook tab:hover:not(:checked) {
+    background: #353535;
+}
+
+stack {
+    background: #1e1e1e;
+}
+
+spinbutton {
+    background: #3d3d3d;
+    color: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #4d4d4d;
+}
+
+combobox {
+    background: #3d3d3d;
+    color: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #4d4d4d;
+}
+
+statusbar {
+    background: #2d2d2d;
+    color: #b0b0b0;
+    padding: 8px;
+    font-size: 12px;
+}
