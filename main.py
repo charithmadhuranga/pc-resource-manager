@@ -4,7 +4,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk, Gdk, GLib, Pango
 from monitor_logic import SystemMonitor
 
 
@@ -453,6 +453,14 @@ class PCResourceManager(Gtk.Application):
         self.disk_info_box.append(self.disk_write_label)
         disk_grid.attach(self.disk_info_box, 2, 0, 1, 1)
 
+        gpu_section = self._create_section("GPU Monitoring")
+        container.append(gpu_section)
+
+        self.gpu_grid = Gtk.Grid()
+        self.gpu_grid.set_column_spacing(16)
+        self.gpu_grid.set_row_spacing(16)
+        container.append(self.gpu_grid)
+
         scroll.set_child(container)
         return scroll
 
@@ -684,6 +692,52 @@ class PCResourceManager(Gtk.Application):
         self.disk_write_graph.add_value(disk_io["write_speed"])
         self.disk_read_label.set_text(f"R: {format_speed(disk_io['read_speed'])}")
         self.disk_write_label.set_text(f"W: {format_speed(disk_io['write_speed'])}")
+
+        gpu_info = self.monitor.get_gpu_info()
+        for child in list(self.gpu_grid.observe_children()):
+            self.gpu_grid.remove(child)
+
+        if not gpu_info:
+            no_gpu_label = Gtk.Label(label="No GPU detected or monitoring tool missing")
+            no_gpu_label.add_css_class("card-subtitle")
+            self.gpu_grid.attach(no_gpu_label, 0, 0, 1, 1)
+        else:
+            for i, gpu in enumerate(gpu_info):
+                frame = Gtk.Frame()
+                frame.add_css_class("card")
+                frame.set_size_request(240, 140)
+
+                vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+                vbox.set_halign(Gtk.Align.FILL)
+
+                name = Gtk.Label(label=gpu["name"])
+                name.add_css_class("card-title")
+                name.set_halign(Gtk.Align.START)
+                name.set_ellipsize(Pango.EllipsizeMode.END)
+                vbox.append(name)
+
+                load_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+                load_label = Gtk.Label(label=f"Load: {gpu['load']:.1f}%")
+                load_label.add_css_class("label-metric")
+                load_box.append(load_label)
+                vbox.append(load_box)
+
+                progress = Gtk.ProgressBar()
+                progress.set_fraction(gpu["load"] / 100)
+                vbox.append(progress)
+
+                if gpu["memory_total"] > 0:
+                    mem_info = Gtk.Label(label=f"{format_bytes(gpu['memory_used'])} / {format_bytes(gpu['memory_total'])}")
+                    mem_info.add_css_class("card-subtitle")
+                    mem_info.set_halign(Gtk.Align.START)
+                    vbox.append(mem_info)
+
+                    mem_progress = Gtk.ProgressBar()
+                    mem_progress.set_fraction(gpu["memory_used"] / gpu["memory_total"])
+                    vbox.append(mem_progress)
+
+                frame.set_child(vbox)
+                self.gpu_grid.attach(frame, i % 2, i // 2, 1, 1)
 
     def update_process_list(self):
         sort_by = self.sort_combo.get_active_id() if self.sort_combo.get_active_id() else "cpu"

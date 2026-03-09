@@ -1,5 +1,9 @@
 import psutil
 import os
+import subprocess
+import shutil
+import re
+import json
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
@@ -9,6 +13,175 @@ class SystemMonitor:
         self._prev_net_io = None
         self._prev_disk_io = None
         self._prev_timestamp = None
+        self.gpu_vendor = self._detect_gpu_vendor()
+
+    def _detect_gpu_vendor(self) -> str:
+        if os.name == "posix":
+            if os.uname().sysname == "Darwin":
+                return "Apple"
+            
+            # Linux detection
+            try:
+                if shutil.which("nvidia-smi"):
+                    return "NVIDIA"
+                if shutil.which("rocm-smi"):
+                    return "AMD"
+                
+                # Check /sys/class/drm for vendor info
+                for i in range(10):
+                    card_path = f"/sys/class/drm/card{i}/device/vendor"
+                    if os.path.exists(card_path):
+                        with open(card_path, "r") as f:
+                            vendor_id = f.read().strip()
+                            if "0x10de" in vendor_id: return "NVIDIA"
+                            if "0x1002" in vendor_id: return "AMD"
+                            if "0x8086" in vendor_id: return "Intel"
+            except Exception:
+                pass
+        
+        elif os.name == "nt": # Windows
+            # Minimal implementation for Windows
+            if shutil.which("nvidia-smi"):
+                return "NVIDIA"
+        
+        return "Unknown"
+
+    def get_gpu_info(self) -> List[Dict[str, Any]]:
+        gpus = []
+        if self.gpu_vendor == "NVIDIA":
+            gpus = self._get_nvidia_gpu_info()
+        elif self.gpu_vendor == "AMD":
+            gpus = self._get_amd_gpu_info()
+        elif self.gpu_vendor == "Intel":
+            gpus = self._get_intel_gpu_info()
+        elif self.gpu_vendor == "Apple":
+            gpus = self._get_apple_gpu_info()
+        
+        # If generic tool detection failed but we have vendor-specific logic
+        if not gpus and self.gpu_vendor == "Unknown":
+            # Try to re-detect or use basic fallbacks
+            pass
+            
+        return gpus
+
+    def _get_nvidia_gpu_info(self) -> List[Dict[str, Any]]:
+        try:
+            if shutil.which("nvidia-smi"):
+                cmd = ["nvidia-smi", "--query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu", "--format=csv,noheader,nounits"]
+                result = subprocess.check_output(cmd, encoding="utf-8").strip()
+                gpus = []
+                for line in result.split("\n"):
+                    if not line: continue
+                    parts = [p.strip() for p in line.split(",")]
+                    if len(parts) >= 5:
+                        gpus.append({
+                            "name": parts[0],
+                            "load": float(parts[1]),
+                            "memory_used": float(parts[2]) * 1024 * 1024,
+                            "memory_total": float(parts[3]) * 1024 * 1024,
+                            "temperature": float(parts[4]),
+                            "vendor": "NVIDIA"
+                        })
+                return gpus
+        except Exception:
+            pass
+        return []
+
+    def _get_amd_gpu_info(self) -> List[Dict[str, Any]]:
+        # For Linux, check sysfs
+        gpus = []
+        try:
+            # Check rocm-smi first
+            if shutil.which("rocm-smi"):
+                cmd = ["rocm-smi", "--showuse", "--showmeminfo", "all", "--json"]
+                result = subprocess.check_output(cmd, encoding="utf-8")
+                data = json.loads(result)
+                for gpu_id, info in data.items():
+                    if gpu_id.startswith("card"):
+                        gpus.append({
+                            "name": f"AMD GPU {gpu_id}",
+                            "load": float(info.get("GPU use (%)", 0)),
+                            "memory_used": float(info.get("GPU memory use (%)", 0)), # Placeholder if real values not here
+                            "memory_total": 0, # Harder to get from this json
+                            "temperature": 0,
+                            "vendor": "AMD"
+                        })
+                if gpus: return gpus
+
+            # Fallback to sysfs for basic load
+            for i in range(10):
+                base_path = f"/sys/class/drm/card{i}/device"
+                busy_path = os.path.join(base_path, "gpu_busy_percent")
+                if os.path.exists(busy_path):
+                    with open(busy_path, "r") as f:
+                        load = float(f.read().strip())
+                    gpus.append({
+                        "name": f"AMD GPU {i}",
+                        "load": load,
+                        "memory_used": 0,
+                        "memory_total": 0,
+                        "temperature": 0,
+                        "vendor": "AMD"
+                    })
+        except Exception:
+            pass
+        return gpus
+
+    def _get_intel_gpu_info(self) -> List[Dict[str, Any]]:
+        # Intel is notoriously hard without specialized tools like intel-gpu-top
+        # On Linux, some newer ones have some info in sysfs
+        gpus = []
+        try:
+            for i in range(10):
+                # Check for Intel card
+                vendor_path = f"/sys/class/drm/card{i}/device/vendor"
+                if os.path.exists(vendor_path):
+                    with open(vendor_path, "r") as f:
+                        if "0x8086" in f.read().strip():
+                            gpus.append({
+                                "name": f"Intel GPU {i}",
+                                "load": 0.0, # Intel doesn't expose easy load in sysfs
+                                "memory_used": 0,
+                                "memory_total": 0,
+                                "temperature": 0,
+                                "vendor": "Intel"
+                            })
+        except Exception:
+            pass
+        return gpus
+
+    def _get_apple_gpu_info(self) -> List[Dict[str, Any]]:
+        # For Apple Silicon, ioreg can provide some info if powermetrics is not available
+        try:
+            cmd = ["system_profiler", "SPDisplaysDataType", "-json"]
+            result = subprocess.check_output(cmd, encoding="utf-8")
+            data = json.loads(result)
+            gpus = []
+            for display in data.get("SPDisplaysDataType", []):
+                name = display.get("sppci_model", "Apple GPU")
+                # Try to get usage via ioreg (heuristic)
+                load = 0.0
+                try:
+                    # This is a bit of a hack and might not work on all macOS versions
+                    ioreg_cmd = ["ioreg", "-n", "AppleMGPUPowerControl", "-r", "-d", "1"]
+                    ioreg_out = subprocess.check_output(ioreg_cmd, encoding="utf-8")
+                    match = re.search(r'"DevicePercentage"\s*=\s*(\d+)', ioreg_out)
+                    if match:
+                        load = float(match.group(1))
+                except Exception:
+                    pass
+                
+                gpus.append({
+                    "name": name,
+                    "load": load,
+                    "memory_used": 0.0,
+                    "memory_total": 0.0,
+                    "temperature": 0.0,
+                    "vendor": "Apple"
+                })
+            return gpus
+        except Exception:
+            return []
 
     def get_cpu_usage_per_core(self) -> List[float]:
         try:
