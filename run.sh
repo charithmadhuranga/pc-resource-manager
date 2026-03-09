@@ -7,9 +7,19 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/.venv"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    export GTK_PATH="/opt/homebrew/opt/gtk4/lib/gtk-4.0"
-    export PYTHONPATH="/opt/homebrew/lib/python3.14/site-packages:$PYTHONPATH"
-    unset GDK_BACKEND
+    # Homebrew paths
+    BREW_PREFIX="/opt/homebrew"
+    if [[ ! -d "$BREW_PREFIX" ]]; then
+        BREW_PREFIX="/usr/local"
+    fi
+    
+    export GTK_PATH="$BREW_PREFIX/opt/gtk4/lib/gtk-4.0"
+    export PYTHONPATH="$BREW_PREFIX/lib/python3.14/site-packages:$PYTHONPATH"
+    export GI_TYPELIB_PATH="$BREW_PREFIX/lib/girepository-1.0"
+    export DYLD_FALLBACK_LIBRARY_PATH="$BREW_PREFIX/lib:$DYLD_FALLBACK_LIBRARY_PATH"
+    
+    # On macOS, it's often better to let GDK decide, but sometimes setting it helps
+    # export GDK_BACKEND=macos
 fi
 
 if [[ ! -d "$VENV_DIR" ]]; then

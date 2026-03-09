@@ -285,13 +285,16 @@ class PCResourceManager(Gtk.Application):
         self.connect("activate", self.on_activate)
 
     def on_activate(self, app):
+        print("Activating application...")
         display = Gdk.Display.get_default()
         if display is None:
             print("No display available")
             return
 
+        print("Setting up CSS...")
         self.setup_css()
 
+        print("Creating window...")
         self.win = Gtk.ApplicationWindow(application=app)
         self.win.set_title("PC Resource Manager")
         self.win.set_default_size(1200, 800)
@@ -303,9 +306,13 @@ class PCResourceManager(Gtk.Application):
         self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.win.set_child(self.main_box)
 
+        print("Creating notebook...")
         self.create_notebook()
+        
+        print("Starting monitoring...")
         self.start_monitoring()
 
+        print("Presenting window...")
         self.win.present()
 
     def setup_css(self):
@@ -453,13 +460,13 @@ class PCResourceManager(Gtk.Application):
         self.disk_info_box.append(self.disk_write_label)
         disk_grid.attach(self.disk_info_box, 2, 0, 1, 1)
 
-        gpu_section = self._create_section("GPU Monitoring")
-        container.append(gpu_section)
+        # gpu_section = self._create_section("GPU Monitoring")
+        # container.append(gpu_section)
 
-        self.gpu_grid = Gtk.Grid()
-        self.gpu_grid.set_column_spacing(16)
-        self.gpu_grid.set_row_spacing(16)
-        container.append(self.gpu_grid)
+        # self.gpu_grid = Gtk.Grid()
+        # self.gpu_grid.set_column_spacing(16)
+        # self.gpu_grid.set_row_spacing(16)
+        # container.append(self.gpu_grid)
 
         scroll.set_child(container)
         return scroll
@@ -633,7 +640,7 @@ class PCResourceManager(Gtk.Application):
             self.update_system_info()
 
     def update_all(self):
-        self.update_dashboard()
+        # self.update_dashboard()
         return True
 
     def update_dashboard(self):
@@ -867,8 +874,10 @@ class PCResourceManager(Gtk.Application):
 
 
 def main():
+    print("Main entry point...")
     app = PCResourceManager()
-    app.run(None)
+    print("Running application...")
+    app.run(sys.argv)
 
 
 if __name__ == "__main__":
