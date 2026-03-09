@@ -4,11 +4,24 @@ A cross-platform desktop application for monitoring system resources (CPU, RAM, 
 
 ## Features
 
-- **Dashboard**: Real-time CPU (per-core), RAM, Swap, Network I/O, Disk I/O, and Battery monitoring
-- **Process Manager**: View all running processes, sort by CPU/Memory/Name/PID, and kill processes
-- **Disk Monitor**: View disk usage for all partitions
-- **System Info**: Display system information (OS, CPU cores, memory)
-- **Dark Mode**: Modern dark theme with visual progress bars
+- **Dashboard**: 
+  - Real-time **CPU (per-core)** monitoring with individual progress bars
+  - **Live Graphs** for CPU and RAM usage history
+  - **Memory & Swap**: Detailed breakdown of physical and swap memory usage
+  - **Network I/O**: Real-time upload/download speeds with history graphs
+  - **Disk I/O**: Live read/write performance monitoring
+- **Process Manager**: 
+  - Comprehensive list of running processes
+  - Sort by CPU, Memory, Name, or PID
+  - Search/Filter capabilities and one-click process termination
+- **GPU Monitoring**: Multi-vendor support (NVIDIA, AMD, Intel, Apple Silicon) for load and memory tracking
+- **Storage**: Detailed disk usage for all mounted partitions
+- **System Info**: Deep-dive into OS, kernel, and hardware specifications
+- **Modern UI**: Polished GTK4/Adwaita interface with:
+  - Linear gradients and glassmorphism effects
+  - Responsive card-based layout
+  - High-performance custom drawing for real-time graphs
+  - Native dark mode support
 
 ## Installation
 
@@ -85,13 +98,16 @@ pc-resource-manager/
 
 ## Controls
 
-- **Dashboard**: Automatically updates every second
+- **Dashboard**: 
+  - Real-time updates every 1 second
+  - Interactive **live graphs** for CPU, RAM, Network, and Disk I/O
+  - Per-core CPU utilization with individual visual progress bars
 - **Processes**: 
-  - Use dropdown to sort by CPU/Memory/Name/PID
-  - Click "Refresh" to reload the process list
-  - Select a process and click "Kill Selected Process" to terminate
-- **Disks**: Shows usage for all mounted partitions
-- **System Info**: Displays static system information
+  - Use the **Sort** dropdown to prioritize by CPU, Memory, Name, or PID
+  - Click "Refresh" to update the process snapshot
+  - Select any process and use the "Kill Process" button (with confirmation) to safely terminate it
+- **Storage**: Real-time disk capacity monitoring for all mounted devices
+- **System**: Detailed overview of hardware and OS specifications
 
 ## License
 
